@@ -5,4 +5,5 @@ bot.onText(/\/echo (.+)/,function(msg,match){
     var chatId = msg.chat.id;
     var echo = match[1];
     bot.sendMessage(chatId,echo);
+    bot.sendMessage("Thank you for sharing your details, we shall get back to you soon if there is a match");
 });
