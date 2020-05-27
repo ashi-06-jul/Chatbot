@@ -9,28 +9,24 @@ Send /start to initiate the conversation.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-import sqlite3
+
 import logging
+import sqlite3
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler)
+from db import DB
 
+d = DB()
 #Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-START, LOCALITY,CITY,PINCODE, STANDARD, BOARD, MEDIUM, SUBJECTS, EMAIL,REQ, END, DYNAMIC_DATA_ENTRY = range(12)
-locality=""
-city=""
-pincode=0
-standard=""
-board=""
-medium=""
-subjects=""
-email=""
-req=""
+START, LOCALITY,CITY,PINCODE, REQ, STANDARD, BOARD, MEDIUM, SUBJECTS, NUMBER, EMAIL, CONFIRM, END = range(13)
+
+
 """def start(update, context):
 	user=update.message.from_user
 	logger.info("locality of%s: %s", user.first_name, update.message.text)
@@ -43,7 +39,7 @@ req=""
 
 def start(update, context):
     """Send a message when the command /start is issued."""
-    localty =update.message.reply_text( 'Hi! Welcome to SumRuxBookExchange. '
+    update.message.reply_text( 'Hi! Welcome to SumRuxBookExchange. '
     'Thank you for choosing us to help you'
     'This is a free service by Sumrux for academic books for covid-19 recovery .'
     'Let us know the details of the books you are looking for and the books you have.\n'
@@ -53,7 +49,7 @@ def start(update, context):
 
 def city(update, context):
 	user=update.message.from_user
-	locacity=logger.info("locality of%s: %s", user.first_name, update.message.text)
+	logger.info("locality of%s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
         'What is your city?',
         reply_markup=ReplyKeyboardRemove())
@@ -62,7 +58,7 @@ def city(update, context):
 
 def pincode(update, context):
 	user=update.message.from_user
-	city=logger.info("City of %s: %s", user.first_name, update.message.text)
+	logger.info("City of %s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
 		'Thankyou, you have made it easier for us to find you a match'
 		'We do need some more information to help you find a suitable bookmatch.'
@@ -75,17 +71,17 @@ def req(update, context):
 	reply_keyboard = [['Need' , 'Have']]
 
 	user=update.message.from_user
-	pincode=logger.info("Pincode of %s: %s", user.first_name, update.message.text)
+	logger.info("Pincode of %s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
     	'Do you need book or have book?',
-    	 reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+    	 reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))	
 
-	return STANDARD
+	return STANDARD 
 
 def standard(update, context):
 	user=update.message.from_user
-	req=logger.info("Requirement of %s: %s", user.first_name, update.message.text)
-	standard=update.message.reply_text(
+	logger.info("Requirement of %s: %s", user.first_name, update.message.text)
+	update.message.reply_text(
 		'Thankyou for trusting us with your information.'
 		'We are on our way to connect you with other readers around you.'
 		'Which standard books are you looking for/Have?',
@@ -95,7 +91,7 @@ def standard(update, context):
 
 def board(update, context):
 	user=update.message.from_user
-	standard=logger.info("Books of standard %s: %s", user.first_name, update.message.text)
+	logger.info("Books of standard %s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
 		'Almost there. Do you have any specific board in mind(CBS/ICSE etc.)?',
 		 reply_markup=ReplyKeyboardRemove())
@@ -106,7 +102,7 @@ def medium(update, context):
 	reply_keyboard = [['English' , 'Hindi']]
 
 	user=update.message.from_user
-	board=logger.info("Books of Board %s: %s", user.first_name, update.message.text)
+	logger.info("Books of Board %s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
     	'Do you want English Medium or Hindi Medium Books?',
     	 reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
@@ -115,34 +111,52 @@ def medium(update, context):
 
 def subjects(update, context):
 	user=update.message.from_user
-	medium=logger.info("Books of Medium %s: %s", user.first_name, update.message.text)
+	logger.info("Books of Medium %s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
 		 'One last thing. Which subjects are you looking for?',
 		 reply_markup=ReplyKeyboardRemove())
 
-	return EMAIL
+	return NUMBER
 
+def number (update,context):
+	user=update.message.from_user
+	logger.info("Phone Number of %s: %s", user.first_name, update.message.text)
+	update.message.reply_text(
+		'Could you please share with us your phone number?',
+		reply_markup=ReplyKeyboardRemove())
+
+
+	return EMAIL
 
 def email(update, context):
 	user=update.message.from_user
-	subjects=logger.info("Books of Subject%s: %s", user.first_name, update.message.text)
+	logger.info("Books of Subject%s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
 		'We are glad you are trusting us with your information'
 		'If you could give us your email ID, it would help us send you the relevant information'
 		'What is your email?', 
 		reply_markup=ReplyKeyboardRemove())
-		
 
-	return DYNAMIC_DATA_ENTRY
+	return CONFIRM
 
+def confirm (update, context):
+	reply_keyboard = [['Yes' , 'No']]
+
+	user=update.message.from_user
+	logger.info("Email of %s: %s", user.first_name, update.message.text)
+	update.message.reply_text(
+		'Thankyou for all your help. Please press yes to confirm your details.',
+		reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+
+	return END
 
 def end(update,context):
 	user=update.message.from_user
-	email=logger.info("Email of%s: %s", user.first_name,update.message.text)
+	logger.info("Confirmation of%s: %s", user.first_name,update.message.text)
 	update.message.reply_text('I hope we are of help to you. Happy reading!',
 		                       reply_markup=ReplyKeyboardRemove())
 
-	return ConversationHandler.END
+	return ConversationHandler.END 
 
 
 def cancel(update, context):
@@ -160,9 +174,13 @@ def error(update, context):
 
 
 def main():
+    d.setup()
     # will Create the Updater and pass it our bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
+
+  
     updater = Updater("1099106816:AAEEfUuB0WKPZ7vieQKk7gbiqGymoGPuFO0", use_context=True)
+
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -182,6 +200,7 @@ def main():
             PINCODE: [MessageHandler(Filters.text, pincode)],
               REQ: [MessageHandler(Filters.text, req)],
 
+           
             STANDARD: [MessageHandler(Filters.text, standard)],
 
             BOARD: [MessageHandler(Filters.text, board)],
@@ -191,18 +210,19 @@ def main():
 
             SUBJECTS: [MessageHandler(Filters.text, subjects)],
 
+            NUMBER: [MessageHandler(Filters.text, number)],
+
             EMAIL: [MessageHandler(Filters.text, email)],
 
-			DYNAMIC_DATA_ENTRY:[MessageHandler(Filters.text, dynamic_data_entry)],
-
+            CONFIRM: [MessageHandler(Filters.text, confirm)],
+            
             END: [MessageHandler(Filters.text,end)]
-
 
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
     )
-    dynamic_data_entry(locality,city,pincode,standard,board,medium,subjects,email,req)
+
     dp.add_handler(conv_handler)
 
     # log all errors
@@ -215,30 +235,9 @@ def main():
     # SIGTERM or SIGABRT. This should be used most of the time
     # start_polling() is non-blocking and will stop the bot.
     updater.idle()
+    d.add_item(CITY, PINCODE, STANDARD, BOARD, MEDIUM, SUBJECTS, NUMBER, EMAIL, REQ, CONFIRM)
+    d.get_items()
 
-def dynamic_data_entry(locality,city,pincode,standard,board,medium,subjects,email,req):
-	conn=sqlite3.connect('details.db')
-	c=conn.cursor()
-	c.execute(""" CREATE TABLE INFO (
-	locality text, city text, pincode integer,standard text, board text, medium text, subjects text,
-	email text, req text)   
-	""")
-	Locality = locality
-	City= city
-	Pincode= pincode
-	Standard= standard
-	Board= board
-	Medium= medium
-	Subjects= subjects
-	Email= email
-	Req= req
-	c.execute("INSERT INTO INFO (locality, city, pincode, standard, board, medium, subjects, email, req) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",(Locality, City, Pincode, Standard, Board, Medium, Subjects, Email, Req))
-	conn.commit()
-	c.execute("Select * from INFO")
-	items=c.fetchall()
-	c.close
-	conn.close
-	return ConversationHandler.END
 
 if __name__ == '__main__':
     main()
