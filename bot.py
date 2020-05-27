@@ -24,7 +24,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-START, LOCALITY,CITY,PINCODE, REQ, STANDARD, BOARD, MEDIUM, SUBJECTS, NUMBER, EMAIL, CONFIRM, END = range(13)
+START, LOCALITY, CITY, PINCODE, REQ, STANDARD, BOARD, MEDIUM, SUBJECTS, NUMBER, EMAIL, CONFIRM, END,TEXT = range(14)
 
 
 """def start(update, context):
@@ -141,13 +141,12 @@ def email(update, context):
 
 def confirm (update, context):
 	reply_keyboard = [['Yes' , 'No']]
-
+	
 	user=update.message.from_user
 	logger.info("Email of %s: %s", user.first_name, update.message.text)
 	update.message.reply_text(
 		'Thankyou for all your help. Please press yes to confirm your details.',
 		reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-
 	return END
 
 def end(update,context):
@@ -155,7 +154,7 @@ def end(update,context):
 	logger.info("Confirmation of%s: %s", user.first_name,update.message.text)
 	update.message.reply_text('I hope we are of help to you. Happy reading!',
 		                       reply_markup=ReplyKeyboardRemove())
-
+	
 	return ConversationHandler.END 
 
 
@@ -215,6 +214,8 @@ def main():
             EMAIL: [MessageHandler(Filters.text, email)],
 
             CONFIRM: [MessageHandler(Filters.text, confirm)],
+
+			TEXT: [MessageHandler(Filters.text, TEXT)],
             
             END: [MessageHandler(Filters.text,end)]
 
@@ -236,8 +237,7 @@ def main():
     # start_polling() is non-blocking and will stop the bot.
     updater.idle()
     d.add_item(CITY, PINCODE, STANDARD, BOARD, MEDIUM, SUBJECTS, NUMBER, EMAIL, REQ, CONFIRM)
-    d.get_items()
-
-
+	
+	
 if __name__ == '__main__':
     main()
