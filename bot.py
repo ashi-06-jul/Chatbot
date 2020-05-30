@@ -14,7 +14,8 @@ import sqlite3
 import logging
 import os
 import re
-
+import sys
+from threading import Thread
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler, DictPersistence, BasePersistence, Dispatcher)
@@ -23,6 +24,8 @@ load_dotenv()
 
 from db import DB
 
+updater = Updater(
+        os.getenv("TELEGRAM_TOKEN",""), use_context=True)
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -30,7 +33,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-START, LOCALITY, CITY, PINCODE, EMAIL, MODEOFCONTACT, REQ, BOARD, STANDARD, SUBJECTS, DEAL, DETAILS, CONFIRM, END = range(14)
+START, LOCALITY, CITY, PINCODE, EMAIL, MODEOFCONTACT, REQ, BOARD, STANDARD, SUBJECTS, DEAL, DETAILS, CONFIRM, RESTART, END = range(15)
 
 
 def start(update, context):
@@ -274,7 +277,7 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        logger.info("Details of %s shown",user.first_name, update.message.text)
+        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
         user = update.message.from_user
         return CONFIRM
     elif(context.user_data['Deal']=="Sell"):
@@ -295,7 +298,7 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        logger.info("Details of %s shown", user.first_name, update.message.text)
+        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
         user = update.message.from_user
         return CONFIRM
     elif(context.user_data['Deal']=="Exchange"):
@@ -316,7 +319,7 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        logger.info("Details of %s shown", user.first_name, update.message.text)
+        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
         user = update.message.from_user
         return CONFIRM
     elif(context.user_data['Deal']=="Donate"):
@@ -337,7 +340,7 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        logger.info("Details of %s shown", user.first_name, update.message.text)
+        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
         user = update.message.from_user
         return CONFIRM
     else:
@@ -359,7 +362,7 @@ def confirm(update, context):
 ''',reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         user = update.message.from_user
         if update.message.text=="Yes":
-            return START
+            return RESTART
         else:
              update.message.reply_text(
             '''Thank you for registering with us.
@@ -396,7 +399,7 @@ def end(update, context):
         user = update.message.from_user
         context.user_data['Confirmation_Update'] = update.message.text
         if update.message.text == "Yes":
-            return START
+            return RESTART
         else:
             update.message.reply_text('''Sorry to see you go. In Case you change your mind please type in
          @SumruxBookBot in telegram search''', reply_markup=ReplyKeyboardRemove())
@@ -415,13 +418,22 @@ def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
+def stop_and_restart():
+        """Gracefully stop the Updater and replace the current process with a new one"""
+        updater.stop()
+        os.execl(sys.executable, sys.executable, *sys.argv)
+
+def restart(update, context):
+        update.message.reply_text('Bot is restarting...')
+        Thread(target=stop_and_restart).start()
+        #updater.start_polling()
+
 
 def main():
     # will Create the Updater and pass it our bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
 
-    updater = Updater(
-        os.getenv("TELEGRAM_TOKEN",""), use_context=True)
+    
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -458,10 +470,10 @@ def main():
 
             DEAL: [MessageHandler(Filters.text, deal)],
 
-            
-
 
             CONFIRM: [MessageHandler(Filters.text, confirm)],
+
+            RESTART: [MessageHandler(Filters.text, restart)],
 
             END: [MessageHandler(Filters.text, end)]
 
@@ -476,7 +488,7 @@ def main():
 
     # Start the Bot
     updater.start_polling()
-
+    dp.add_handler(CommandHandler('r', restart, filters=Filters.user(username='@jh0ker')))
     #    press ctrl c for stopping the bot
     # SIGTERM or SIGABRT. This should be used most of the time
     # start_polling() is non-blocking and will stop the bot.
