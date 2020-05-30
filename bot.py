@@ -14,8 +14,7 @@ import sqlite3
 import logging
 import os
 import re
-import sys
-from threading import Thread
+from telegram import User, TelegramObject
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           ConversationHandler, DictPersistence, BasePersistence, Dispatcher)
@@ -24,8 +23,6 @@ load_dotenv()
 
 from db import DB
 
-updater = Updater(
-        os.getenv("TELEGRAM_TOKEN",""), use_context=True)
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -33,7 +30,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-START, LOCALITY, CITY, PINCODE, EMAIL, MODEOFCONTACT, REQ, BOARD, STANDARD, SUBJECTS, DEAL, DETAILS, CONFIRM, RESTART, END = range(15)
+START, LOCALITY, CITY, PINCODE, EMAIL, MODEOFCONTACT, REQ, BOARD, STANDARD, SUBJECTS, DEAL, DETAILS, CONFIRM, END = range(14)
 
 
 def start(update, context):
@@ -48,6 +45,8 @@ This is a free service by Sumrux for academic books for Covid-19 recovery.
 Let us know the details of the books you are looking for/the books you have. 
 We will find the right people for your books and connect them to you. 
 You have complete freedom to talk to them and finalize the deal. You can buy/sell/donate/exchange the books. 
+To know how it works visit 
+Https://www.sumrux.com/know-backtostudies
 Let us get you started. 
 We need your locality to find the closest match. 
 Please enter your locality.
@@ -79,8 +78,7 @@ def city(update, context):
     if(re.search(regex,context.user_data['City'])):
         logger.info("City of %s: %s", user.first_name, update.message.text)
         update.message.reply_text(
-        '''
-Thankyou, you have made it easier for us to find you a match. 
+        ''' 
 We do need some more information to help you find a suitable bookmatch.
 Please enter your pincode.''',
         reply_markup=ReplyKeyboardRemove())
@@ -98,8 +96,9 @@ def pincode(update, context):
     if(re.search(regex, context.user_data['Pincode'])):
         logger.info("Pincode of %s: %s", user.first_name, update.message.text)
         update.message.reply_text(
-        '''Kindly enter your email ID (if you do not have one we shall contact you via phone number)
-User response: No''',
+        '''Thankyou, you have made it easier for us to find you a match.
+Kindly enter your email ID (if you do not have one we shall contact you via phone)
+Type "No" if you do not have Email ID.''',
         reply_markup=ReplyKeyboardRemove())
     else:
         update.message.reply_text('Please enter a valid Pincode',reply_markup=ReplyKeyboardRemove())
@@ -121,7 +120,9 @@ def email(update,context):
     elif(context.user_data['Email']=="No"):
         reply_keyboard = [['Need', 'Have']]
         update.message.reply_text(
-            '''OK we will contact you through Phone. Please enter that you Need or Have books?''',
+            '''No problem we will contact over phone. 
+Do you need books of have books to sell/exchange/donate. 
+Choose need or have''',
              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         context.user_data['Modeofcontact']="No Email"
         context.user_data['Modeofcontact']="Phone"
@@ -141,13 +142,13 @@ def modeofcontact(update, context):
         logger.info("Mode of contact is %s: %s", user.first_name, update.message.text)
         reply_keyboard = [['Need', 'Have']]
         update.message.reply_text(
-        'Please enter that you Need or Have books?',
+        'Do you need books or have to sell/donate/exchange?',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     elif (context.user_data['Modeofcontact']=="Email"):
             logger.info("Mode of contact is %s: %s", user.first_name, update.message.text)
             reply_keyboard = [['Need', 'Have']]
             update.message.reply_text(
-        'Please enter that you Need or Have books?',
+        'Do you need books or have to sell/donate/exchange?',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     else:
         update.message.reply_text('Please enter valid preferred mode of contact Phone/Email',reply_markup=ReplyKeyboardRemove())
@@ -166,18 +167,16 @@ def req(update, context):
         reply_keyboard = [['CBSE', 'ICSE','State Board']]
         update.message.reply_text(
         '''
-Thankyou for trusting us with your information.
 We are on our way to connect you with other readers around you.
-You are looking for/Have books for which Board (CBSE/ICSE/State Board)?''',
+Which board books are you looking for/ have??''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     elif(context.user_data['Req']=="Have"):
         logger.info("Requirement of %s: %s", user.first_name, update.message.text)
         reply_keyboard = [['CBSE', 'ICSE','State Board']]
         update.message.reply_text(
         '''
-Thankyou for trusting us with your information.
 We are on our way to connect you with other readers around you.
-You are looking for/Have books for which Board (CBSE/ICSE/State Board)?''',
+Which board books are you looking for/ have?''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     else:
         update.message.reply_text('Please enter valid requirements',reply_markup=ReplyKeyboardRemove())
@@ -193,20 +192,18 @@ def board(update, context):
     if(context.user_data['Board']=="ICSE"):
         logger.info("Board is %s: %s", user.first_name, update.message.text)
         update.message.reply_text(
-        '''
-Which standard books are you looking for/Have, Enter standard in digits (1 to 12)?''',
+        '''The Grade/class please. Enter a number 1 to 12''',
         reply_markup=ReplyKeyboardRemove())
     elif(context.user_data['Board']=="CBSE"):
         logger.info("Board is %s: %s", user.first_name, update.message.text)
         update.message.reply_text(
-        '''
-Which standard books are you looking for/Have, Enter standard in digits (1 to 12)?''',
+        '''The Grade/class please.
+Enter a number 1 to 12''',
         reply_markup=ReplyKeyboardRemove())
     elif(context.user_data['Board']=="State Board"):
         logger.info("Board is %s: %s", user.first_name, update.message.text)
         update.message.reply_text(
-        '''
-Which standard books are you looking for/Have, Enter standard in digits (1 to 12)?''',
+        '''The Grade/class please. Enter a number 1 to 12''',
         reply_markup=ReplyKeyboardRemove())
     else:
         reply_keyboard = [['CBSE', 'ICSE','State Board']]
@@ -227,7 +224,8 @@ def standard(update, context):
         logger.info("Books of standard %s: %s", user.first_name, update.message.text)
         update.message.reply_text(
         '''
-       Which subjects do you have in mind? Please list them. 
+       Which subjects do you have in mind? 
+Please list them. 
 ex: Physics, Hindi, Mathematics, Chemistry, Biology, Science, Social Science, English, Hindi, Kannada, Sanskrit, French, RS Aggarwal , RD Sharma, History, Civics, Geography, Others?''',
         reply_markup=ReplyKeyboardRemove())       
     else:
@@ -264,7 +262,8 @@ def deal(update, context):
         reply_keyboard = [['Yes', 'No']]
         update.message.reply_text(
         f'''
-Thankyou for all your help. Please press yes to confirm your details.
+We got all we need to find the contacts for your books. Please confirm the details are correct.
+Name : {user.first_name},
 Locality : {context.user_data["Locality"]}, 
 City : {context.user_data["City"]}, 
 Pincode : {context.user_data["Pincode"]}, 
@@ -281,11 +280,12 @@ Deal : {context.user_data["Deal"]},
         user = update.message.from_user
         return CONFIRM
     elif(context.user_data['Deal']=="Sell"):
-        logger.info("Deal is %s: %s", user.first_name, update.message.text)
-        reply_keyboard = [['Yes', 'No']]
-        update.message.reply_text(
+         logger.info("Deal is %s: %s", user.first_name, update.message.text)
+         reply_keyboard = [['Yes', 'No']]
+         update.message.reply_text(
         f'''
-Thankyou for all your help. Please press yes to confirm your details.
+We got all we need to find the contacts for your books. Please confirm the details are correct.
+Name : {user.first_name},
 Locality : {context.user_data["Locality"]}, 
 City : {context.user_data["City"]}, 
 Pincode : {context.user_data["Pincode"]}, 
@@ -298,15 +298,16 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
-        user = update.message.from_user
-        return CONFIRM
+         logger.info("Details of %s shown %s",user.first_name,  update.message.text)
+         user = update.message.from_user
+         return CONFIRM
     elif(context.user_data['Deal']=="Exchange"):
         logger.info("Deal is %s: %s", user.first_name, update.message.text)
         reply_keyboard = [['Yes', 'No']]
         update.message.reply_text(
         f'''
-Thankyou for all your help. Please press yes to confirm your details.
+We got all we need to find the contacts for your books. Please confirm the details are correct.
+Name : {user.first_name},
 Locality : {context.user_data["Locality"]}, 
 City : {context.user_data["City"]}, 
 Pincode : {context.user_data["Pincode"]}, 
@@ -323,11 +324,12 @@ Deal : {context.user_data["Deal"]},
         user = update.message.from_user
         return CONFIRM
     elif(context.user_data['Deal']=="Donate"):
-        logger.info("Deal is %s: %s", user.first_name, update.message.text)
-        reply_keyboard = [['Yes', 'No']]
-        update.message.reply_text(
+         logger.info("Deal is %s: %s", user.first_name, update.message.text)
+         reply_keyboard = [['Yes', 'No']]
+         update.message.reply_text(
         f'''
-Thankyou for all your help. Please press yes to confirm your details.
+We got all we need to find the contacts for your books. Please confirm the details are correct.
+Name : {user.first_name},
 Locality : {context.user_data["Locality"]}, 
 City : {context.user_data["City"]}, 
 Pincode : {context.user_data["Pincode"]}, 
@@ -340,9 +342,9 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
-        user = update.message.from_user
-        return CONFIRM
+         logger.info("Details of %s shown %s",user.first_name,  update.message.text)
+         user = update.message.from_user
+         return CONFIRM
     else:
         reply_keyboard = [['Buy', 'Sell', 'Donate', 'Exchange']]
         update.message.reply_text('Please enter valid Deal (Buy/Sell/Donate/Exchange)',
@@ -362,8 +364,8 @@ def confirm(update, context):
 ''',reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         user = update.message.from_user
         if update.message.text=="Yes":
-            return RESTART
-        else:
+            return START
+        elif update.message.text=="No":
              update.message.reply_text(
             '''Thank you for registering with us.
                Thank you for going green. 
@@ -374,7 +376,7 @@ def confirm(update, context):
         update.message.reply_text('''Sorry we got it wrong,if you would like to enter details again enter /start.
         ''',reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         if update.message.text=="Yes":
-            return START
+            return start
         else:
             update.message.reply_text('''Sorry to see you go. In Case you change your mind please type in @SumruxBookBot in telegram search''',
          reply_markup=ReplyKeyboardRemove())
@@ -384,7 +386,7 @@ def end(update, context):
     user = update.message.from_user
     context.user_data['Confirm'] = update.message.text
     if update.message.text == "Yes":
-        logger.info("Confirmation of%s: %s",
+        logger.info("Confirmation of %s: %s",
                     user.first_name, update.message.text)
         update.message.reply_text(
             'I hope we are of help to you. Happy reading!', reply_markup=ReplyKeyboardRemove())
@@ -399,7 +401,7 @@ def end(update, context):
         user = update.message.from_user
         context.user_data['Confirmation_Update'] = update.message.text
         if update.message.text == "Yes":
-            return RESTART
+            return START
         else:
             update.message.reply_text('''Sorry to see you go. In Case you change your mind please type in
          @SumruxBookBot in telegram search''', reply_markup=ReplyKeyboardRemove())
@@ -418,22 +420,13 @@ def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
-def stop_and_restart():
-        """Gracefully stop the Updater and replace the current process with a new one"""
-        updater.stop()
-        os.execl(sys.executable, sys.executable, *sys.argv)
-
-def restart(update, context):
-        update.message.reply_text('Bot is restarting...')
-        Thread(target=stop_and_restart).start()
-        #updater.start_polling()
-
 
 def main():
     # will Create the Updater and pass it our bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
 
-    
+    updater = Updater(
+        os.getenv("TELEGRAM_TOKEN",""), use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
@@ -443,7 +436,7 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-           # START:[MessageHandler(Filters.text), start)],
+           START:[MessageHandler(Filters.text, start)],
 
             LOCALITY:[MessageHandler(Filters.text, locality)],
 
@@ -470,12 +463,14 @@ def main():
 
             DEAL: [MessageHandler(Filters.text, deal)],
 
+            
+
 
             CONFIRM: [MessageHandler(Filters.text, confirm)],
+            
 
-            RESTART: [MessageHandler(Filters.text, restart)],
-
-            END: [MessageHandler(Filters.text, end)]
+            END: [MessageHandler(Filters.text, end)],
+            
 
         },
 
@@ -488,7 +483,7 @@ def main():
 
     # Start the Bot
     updater.start_polling()
-    dp.add_handler(CommandHandler('r', restart, filters=Filters.user(username='@jh0ker')))
+
     #    press ctrl c for stopping the bot
     # SIGTERM or SIGABRT. This should be used most of the time
     # start_polling() is non-blocking and will stop the bot.
