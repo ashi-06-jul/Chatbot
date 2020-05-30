@@ -4,6 +4,7 @@ First, a few callback functions are defined. Then, those functions are passed to
 the Dispatcher and registered at their respective places.
 Then, the bot is started and runs until we press Ctrl-C on the command line.
 Usage:
+
 Example of a bot-user conversation using ConversationHandler.
 Send /start to initiate the conversation.
 Press Ctrl-C on the command line or send a signal to the process to stop the
@@ -278,11 +279,19 @@ Deal : {context.user_data["Deal"]},
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         logger.info("Details of %s shown %s",user.first_name,  update.message.text)
         user = update.message.from_user
-        return CONFIRM
+        context.user_data['Confirm'] = update.message.text
+        if(context.user_data['Confirm']=="Yes"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return CONFIRM
+        elif(context.user_data['Confirm']=="No"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return END
     elif(context.user_data['Deal']=="Sell"):
-         logger.info("Deal is %s: %s", user.first_name, update.message.text)
-         reply_keyboard = [['Yes', 'No']]
-         update.message.reply_text(
+        logger.info("Deal is %s: %s", user.first_name, update.message.text)
+        reply_keyboard = [['Yes', 'No']]
+        update.message.reply_text(
         f'''
 We got all we need to find the contacts for your books. Please confirm the details are correct.
 Name : {user.first_name},
@@ -298,9 +307,17 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-         logger.info("Details of %s shown %s",user.first_name,  update.message.text)
-         user = update.message.from_user
-         return CONFIRM
+        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
+        user = update.message.from_user
+        context.user_data['Confirm'] = update.message.text
+        if(context.user_data['Confirm']=="Yes"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return CONFIRM
+        elif(context.user_data['Confirm']=="No"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return END
     elif(context.user_data['Deal']=="Exchange"):
         logger.info("Deal is %s: %s", user.first_name, update.message.text)
         reply_keyboard = [['Yes', 'No']]
@@ -322,11 +339,19 @@ Deal : {context.user_data["Deal"]},
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         logger.info("Details of %s shown %s",user.first_name,  update.message.text)
         user = update.message.from_user
-        return CONFIRM
+        context.user_data['Confirm'] = update.message.text
+        if(context.user_data['Confirm']=="Yes"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return CONFIRM
+        elif(context.user_data['Confirm']=="No"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return END
     elif(context.user_data['Deal']=="Donate"):
-         logger.info("Deal is %s: %s", user.first_name, update.message.text)
-         reply_keyboard = [['Yes', 'No']]
-         update.message.reply_text(
+        logger.info("Deal is %s: %s", user.first_name, update.message.text)
+        reply_keyboard = [['Yes', 'No']]
+        update.message.reply_text(
         f'''
 We got all we need to find the contacts for your books. Please confirm the details are correct.
 Name : {user.first_name},
@@ -342,9 +367,17 @@ Subjects : {context.user_data["Subjects"]},
 Deal : {context.user_data["Deal"]}, 
 ''',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-         logger.info("Details of %s shown %s",user.first_name,  update.message.text)
-         user = update.message.from_user
-         return CONFIRM
+        logger.info("Details of %s shown %s",user.first_name,  update.message.text)
+        user = update.message.from_user
+        context.user_data['Confirm'] = update.message.text
+        if(context.user_data['Confirm']=="Yes"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return CONFIRM
+        elif(context.user_data['Confirm']=="No"):
+            logger.info("Confirmation of %s: %s",
+                    user.first_name, update.message.text)     
+            return END
     else:
         reply_keyboard = [['Buy', 'Sell', 'Donate', 'Exchange']]
         update.message.reply_text('Please enter valid Deal (Buy/Sell/Donate/Exchange)',
@@ -354,63 +387,46 @@ Deal : {context.user_data["Deal"]},
         return DEAL
     return CONFIRM
 
-def confirm(update, context):    
-    context.user_data['Confirm'] = update.message.text
-    user = update.message.from_user
-    if(context.user_data['Confirm']=="Yes"):
-        logger.info("Confirmation of %s: %s", user.first_name, update.message.text)
+def confirm(update, context):
+    if(context.user_data['Confirm']== "Yes"):  
+        db = DB()
+        db.setup()
         reply_keyboard = [['Yes', 'No']]
-        update.message.reply_text(f'''{context.user_data['Deal']} : We have noted your requirements. Almost there!!! You should be having previous grade books, which another student might be able to use, please share the details and we will find the student for you. Would you like to register more book requests? 
+        update.message.reply_text(f'''{context.user_data['Deal']} : We have noted your requirements. 
+Almost there!!! 
+You should be having previous grade books, which another student might be able to use, 
+please share the details and we will find the student for you. 
+Would you like to register more book requests? 
 ''',reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         user = update.message.from_user
-        context.user_data['more_details'] = update.message.text
-        if(context.user_data['more_details']=="Yes"):
+        #user = update.message.from_user
+        context.user_data['Confirm'] = update.message.text
+        if update.message.text == "Yes":
+            db.add_item(**context.user_data)
             return START
-        elif(context.user_data['more_details']=="No"): 
-             update.message.reply_text(
+        elif update.message.text == "No":
+            db.add_item(**context.user_data)
+            update.message.reply_text(
             '''Thank you for registering with us.
                Thank you for going green. 
                We will find a match and get back to you shortly.
                Stay safe.''', reply_markup=ReplyKeyboardRemove())
-             return END
-    elif(context.user_data['Confirm']=="No"):
-        reply_keyboard = [['Yes', 'No']]
-        update.message.reply_text('''Sorry we got it wrong,if you would like to enter details again press Yes.
-        ''',reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        user = update.message.from_user
-        context.user_data['more_details'] = update.message.text
-        if(context.user_data['more_details']=="Yes"):
-            return START
-        elif(context.user_data['more_details']=="No"):
-            update.message.reply_text('''Sorry to see you go. In Case you change your mind please type in @SumruxBookBot in telegram search''',
-        reply_markup=ReplyKeyboardRemove())
-            return END
-    return END
+    else:
+        return ConversationHandler 
+   # db.add_item(**context.user_data)    
+    return ConversationHandler.END
 
 def end(update, context):
-    user = update.message.from_user
-    context.user_data['Confirm'] = update.message.text
-    if update.message.text == "Yes":
-        logger.info("Confirmation of %s: %s",
-                    user.first_name, update.message.text)
-        update.message.reply_text(
-            'I hope we are of help to you. Happy reading!', reply_markup=ReplyKeyboardRemove())
-        db = DB()
-        db.setup()
-        db.add_item(**context.user_data)
-        return ConversationHandler.END
-
-    elif(context.user_data['Confirm'] == "No"):
+    if(context.user_data['Confirm']== "No"): 
         update.message.reply_text(
             'Please enter Yes for entering details again', reply_markup=ReplyKeyboardRemove())
-        user = update.message.from_user
-        context.user_data['Confirmation_Update'] = update.message.text
-        if update.message.text == "Yes":
+        context.user_data['Confirm'] = update.message.text
+        if(context.user_data['Confirm']=="Yes"):
             return START
         else:
             update.message.reply_text('''Sorry to see you go. In Case you change your mind please type in
          @SumruxBookBot in telegram search''', reply_markup=ReplyKeyboardRemove())
-            return END
+        return ConversationHandler.END
 
 def cancel(update, context):
     user = update.message.from_user
@@ -474,7 +490,7 @@ def main():
             CONFIRM: [MessageHandler(Filters.text, confirm)],
             
 
-            END: [MessageHandler(Filters.text, end)],
+            END: [MessageHandler(Filters.text, end)]
             
 
         },
