@@ -363,23 +363,28 @@ def confirm(update, context):
         update.message.reply_text(f'''{context.user_data['Deal']} : We have noted your requirements. Almost there!!! You should be having previous grade books, which another student might be able to use, please share the details and we will find the student for you. Would you like to register more book requests? 
 ''',reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         user = update.message.from_user
-        if update.message.text=="Yes":
+        context.user_data['more_details'] = update.message.text
+        if(context.user_data['more_details']=="Yes"):
             return START
-        elif update.message.text=="No":
+        elif(context.user_data['more_details']=="No"): 
              update.message.reply_text(
             '''Thank you for registering with us.
                Thank you for going green. 
                We will find a match and get back to you shortly.
                Stay safe.''', reply_markup=ReplyKeyboardRemove())
+             return END
     elif(context.user_data['Confirm']=="No"):
         reply_keyboard = [['Yes', 'No']]
-        update.message.reply_text('''Sorry we got it wrong,if you would like to enter details again enter /start.
+        update.message.reply_text('''Sorry we got it wrong,if you would like to enter details again press Yes.
         ''',reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        if update.message.text=="Yes":
-            return start
-        else:
+        user = update.message.from_user
+        context.user_data['more_details'] = update.message.text
+        if(context.user_data['more_details']=="Yes"):
+            return START
+        elif(context.user_data['more_details']=="No"):
             update.message.reply_text('''Sorry to see you go. In Case you change your mind please type in @SumruxBookBot in telegram search''',
-         reply_markup=ReplyKeyboardRemove())
+        reply_markup=ReplyKeyboardRemove())
+            return END
     return END
 
 def end(update, context):
