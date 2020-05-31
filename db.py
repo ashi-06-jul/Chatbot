@@ -8,13 +8,14 @@ class DB:
         self.conn = sqlite3.connect(dbname)
 
     def setup(self):
-        stmt = "CREATE TABLE IF NOT EXISTS INFO(locality text, city text, pincode integer, email text, modeofcontact text, req text, board text, standard integer, subjects text, Deal text, confirm text)"
+        stmt = "CREATE TABLE IF NOT EXISTS INFO(city text, locality text, pincode integer, req text, standard text, board text, medium text, subjects text, contact integer, email text, confirm text)"
         self.conn.execute(stmt)
         self.conn.commit()
 
-    def add_item(self, Locality, City, Pincode, Email, Modeofcontact, Req, Board, Standard, Subjects, Deal, Confirm):
-        stmt = "INSERT INTO INFO (Locality, City, Pincode, Email, modeofcontact, Req, Board, Standard, Subjects, Deal, Confirm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)"
-        args = (Locality, City, Pincode, Email, Modeofcontact, Req, Board, Standard, Subjects, Deal, Confirm)
+    def add_item(self, City, Locality,Pincode, Req, Standard, Board, Medium, Subjects, Contact, Email, Confirm):
+        stmt = "INSERT INTO INFO (city, locality, pincode, req, standard, board, medium, subjects, contact, email, confirm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        args = (City, Locality, Pincode, Req, Standard, Board, Medium,
+                Subjects, Contact, Email, Confirm)
         self.conn.execute(stmt, args)
         self.conn.commit()
 
@@ -25,5 +26,5 @@ class DB:
         self.conn.commit()
 
     def get_items(self):
-        stmt = "SELECT Locality, City, Pincode, Email, mode_of_contact, Req, Board, Standard, Subjects, Deal, Confirm FROM INFO"
+        stmt = "SELECT City, Locality, Pincode, Req, Standard, Board, Medium, Subjects, Contact, Email, Confirm FROM INFO"
         return [x for x in self.conn.execute(stmt)]
